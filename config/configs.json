@@ -1,0 +1,4 @@
+{
+  "num_epochs": 3,
+  "train_size": 0.7
+}
