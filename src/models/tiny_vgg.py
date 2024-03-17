@@ -23,7 +23,7 @@ class TinyVGG(nn.Module):
             ("max_pool_1", nn.MaxPool2d(2)),
 
             # Block 2
-            ("conv_2_1", nn.Conv2d(in_channels=input_shape,
+            ("conv_2_1", nn.Conv2d(in_channels=hidden_units,
                                    out_channels=hidden_units,
                                    kernel_size=3,
                                    padding=1)),
@@ -39,7 +39,7 @@ class TinyVGG(nn.Module):
 
         self.classifier = nn.Sequential(OrderedDict([
             ("flatten", nn.Flatten()),
-            ("linear", nn.Linear(in_features=0,
+            ("linear", nn.Linear(in_features=10,
                                  out_features=output_shape))
         ]))
 
