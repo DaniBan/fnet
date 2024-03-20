@@ -1,4 +1,5 @@
 # install torch manually based on your specifications
+# torch version: 2.2.1
 
 matplotlib~=3.8.3
 pandas~=2.2.1
