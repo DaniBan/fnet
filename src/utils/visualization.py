@@ -1,5 +1,6 @@
 from timeit import default_timer as timer
 from torch import Tensor
+from typing import Dict, List
 
 import matplotlib.pyplot as plt
 import torch.utils.data.dataset
@@ -65,5 +66,21 @@ def display_random_items(dataset: torch.utils.data.dataset.Dataset, n=2, m=2, se
         plt.imshow(img_adjust, cmap="gray")
         plt.scatter(label_x, label_y, s=8, c="r")
         plt.axis(False)
+
+    plt.show()
+
+
+def plot_loss_curves(results: Dict[str, List[float]]):
+    plt.figure(figsize=(9, 9))
+    train_loss = results["train_loss"]
+    test_loss = results["test_loss"]
+
+    epochs = range(len(train_loss))
+
+    plt.plot(epochs, train_loss, label="train loss")
+    plt.plot(epochs, test_loss, label="test loss")
+    plt.title("Loss")
+    plt.xlabel("Epochs")
+    plt.legend()
 
     plt.show()

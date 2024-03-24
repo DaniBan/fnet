@@ -39,7 +39,7 @@ class TinyVGG(nn.Module):
 
         self.classifier = nn.Sequential(OrderedDict([
             ("flatten", nn.Flatten()),
-            ("linear", nn.Linear(in_features=10,
+            ("linear", nn.Linear(in_features=3844 * hidden_units,
                                  out_features=output_shape))
         ]))
 
