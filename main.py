@@ -25,7 +25,7 @@ def train_step(model: nn.Module,
     model.train()
     total_loss = 0
     if device is None:
-        device = "cpu"
+        device = torch.device("cpu")
 
     for batch, (X, y) in enumerate(dataloader):
         # Move data to device
@@ -122,7 +122,7 @@ def main():
                                        batch_size=batch_size,
                                        num_workers=num_workers)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
 
     # Set criterion and optimizer
@@ -136,8 +136,8 @@ def main():
 
     start_time = timer()
     for epoch in tqdm(range(num_epochs)):
-        train_loss = train_step(model_tiny_vgg, train_dataloader, loss_fn, optimizer=optimizer)
-        test_loss = test_step(model_tiny_vgg, test_dataloader, loss_fn)
+        train_loss = train_step(model_tiny_vgg, train_dataloader, loss_fn, optimizer=optimizer, device=device)
+        test_loss = test_step(model_tiny_vgg, test_dataloader, loss_fn, device=device)
 
         print(f"Epoch: {epoch}")
         print(f"Train loss: {train_loss}")
