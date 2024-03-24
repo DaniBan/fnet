@@ -2,7 +2,7 @@ import torch
 from src.models.tiny_vgg import TinyVGG
 from src.dataset.custom_lfw import FaceDataset
 from torchvision import transforms
-from src.utils.visualization import plot_prediciton, display_item
+from src.utils.visualization import plot_prediciton
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
