@@ -70,6 +70,20 @@ def display_random_items(dataset: torch.utils.data.dataset.Dataset, n=2, m=2, se
     plt.show()
 
 
+def plot_prediciton(img, preds):
+    img_adjust = img.permute(1, 2, 0)
+
+    label_x = preds[::2]
+    label_y = preds[1::2]
+    print(label_x)
+    print(label_y)
+    plt.figure(figsize=(9, 9))
+    plt.imshow(img_adjust)
+    plt.scatter(label_x, label_y, s=8, c="r")
+    plt.axis("off")
+    plt.show()
+
+
 def plot_loss_curves(results: Dict[str, List[float]]):
     plt.figure(figsize=(9, 9))
     train_loss = results["train_loss"]
