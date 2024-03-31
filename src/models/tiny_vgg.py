@@ -1,6 +1,7 @@
+from collections import OrderedDict
+
 from torch import Tensor
 from torch import nn
-from collections import OrderedDict
 
 
 class TinyVGG(nn.Module):

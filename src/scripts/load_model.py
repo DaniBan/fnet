@@ -3,6 +3,7 @@ from src.models.tiny_vgg import TinyVGG
 from src.dataset.custom_lfw import FaceDataset
 from torchvision import transforms
 from src.utils.visualization import plot_prediciton
+import cv2
 
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
@@ -15,9 +16,15 @@ transform = transforms.Compose([
 ])
 dataset = FaceDataset("../../data/full", transform)
 
-img_0, labels_0 = dataset[0]
-img_0_batch = img_0.unsqueeze(dim=0)
+# img_0, labels_0 = dataset[30]
+# img_0_batch = img_0.unsqueeze(dim=0)
+
+img = cv2.imread("test_images/dani_resized.jpg")
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+img_tensor = transform(img)
+# img_tensor_reshaped = img_tensor.permute(2, 0, 1)
+img_batch = img_tensor.unsqueeze(dim=0)
+
 with torch.inference_mode():
-    y_pred = model(img_0_batch.to(device))
-    # print(y_pred.shape)
-    plot_prediciton(img_0, y_pred.squeeze(dim=0))
+    y_pred = model(img_batch.to(device))
+    plot_prediciton(img_tensor, y_pred.squeeze(dim=0))

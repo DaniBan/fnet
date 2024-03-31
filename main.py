@@ -15,6 +15,7 @@ from src.dataset.data_factory import build_datasets
 from src.models.tiny_vgg import TinyVGG
 from src.scripts.dataloader import build_dataloader
 from src.utils.visualization import plot_loss_curves
+from src.models.losses import mse_log_loss
 
 
 def train_step(model: nn.Module,
@@ -39,13 +40,16 @@ def train_step(model: nn.Module,
         loss.backward()
         optimizer.step()
 
+        # if batch == 9:
+        #     print(f"Predictions after batch {batch}: {y_pred}")
+
     total_loss = total_loss / len(dataloader)
     return total_loss
 
 
 def test_step(model: nn.Module,
               dataloader: torch.utils.data.DataLoader,
-              loss_fn: nn.Module,
+              loss_fn,
               device=None):
     model.eval()
     total_loss = 0
@@ -88,14 +92,6 @@ def save_state(state_dict, config, tag=None):
         json.dump(config, f, indent=2)
 
 
-def normalize_labels(labels, x_ratio, y_ratio):
-    x = labels.clone()
-    x[::2] /= x_ratio
-    x[1::2] /= y_ratio
-
-    return x
-
-
 def main():
     # Fetch dataset
     data_transform = transforms.Compose([
@@ -127,7 +123,7 @@ def main():
 
     # Set criterion and optimizer
     loss_fn = nn.MSELoss()
-    optimizer = optim.SGD(params=model_tiny_vgg.parameters(), lr=lr)
+    optimizer = optim.Adam(params=model_tiny_vgg.parameters(), lr=lr)
 
     results = {
         "train_loss": [],
@@ -147,7 +143,9 @@ def main():
         results["test_loss"].append(test_loss)
 
     end_time = timer()
-    print(f"Train time: {end_time - start_time:.3f}")
+    print("========================\nTrain time:")
+    print(f"Seconds: {end_time - start_time:.3f}")
+    print(f"Minutes: {(end_time - start_time) / 60:.2f}")
 
     save_state(model_tiny_vgg.state_dict(), config, "tinyVgg")
     plot_loss_curves(results)

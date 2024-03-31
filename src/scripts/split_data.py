@@ -3,8 +3,6 @@ import pathlib
 import pandas as pd
 import shutil
 
-CONVERT_TO_GRAY = True
-
 PATH_TO_DATA = "../../data/full"
 DEST_PATH_TRAIN = "../../data/train"
 DEST_PATH_TEST = "../../data/test"
@@ -36,5 +34,3 @@ train_labels_df.to_csv(os.path.join(DEST_PATH_TRAIN, 'labels/labels.csv'), index
 for image_path in test_paths:
     shutil.copy(image_path, os.path.join(DEST_PATH_TEST, "images"))
 test_labels_df.to_csv(os.path.join(DEST_PATH_TEST, 'labels/labels.csv'), index=False)
-
-if CONVERT_TO_GRAY:
