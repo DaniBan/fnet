@@ -12,10 +12,11 @@ from torchvision import transforms
 from tqdm import tqdm
 
 from src.dataset.data_factory import build_datasets
-from src.models.tiny_vgg import TinyVGG
+from src.models.vgg import TinyVGG
+from src.models.vgg import VGG16
 from src.scripts.dataloader import build_dataloader
 from src.utils.visualization import plot_loss_curves
-from src.models.losses import mse_log_loss
+from src.utils.visualization import print_image
 
 
 def train_step(model: nn.Module,
@@ -39,9 +40,6 @@ def train_step(model: nn.Module,
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
-        # if batch == 9:
-        #     print(f"Predictions after batch {batch}: {y_pred}")
 
     total_loss = total_loss / len(dataloader)
     return total_loss
@@ -69,7 +67,7 @@ def test_step(model: nn.Module,
     return total_loss
 
 
-def save_state(state_dict, config, tag=None):
+def save_state(state_dict, config, results=None, tag=None):
     state_path = Path("states")
     state_path.mkdir(parents=True,
                      exist_ok=True)
@@ -90,6 +88,11 @@ def save_state(state_dict, config, tag=None):
     # save config
     with open(os.path.join(snapshot_path, "config.json"), "w") as f:
         json.dump(config, f, indent=2)
+
+    # save results
+    if results is not None:
+        with open(os.path.join(snapshot_path, "results"), "w") as f:
+            json.dump(results, f, indent=2)
 
 
 def main():
@@ -119,21 +122,26 @@ def main():
                                        num_workers=num_workers)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
+    # model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
+    model_vgg16 = VGG16(input_shape=3, output_shape=18).to(device=device)
 
     # Set criterion and optimizer
     loss_fn = nn.MSELoss()
-    optimizer = optim.Adam(params=model_tiny_vgg.parameters(), lr=lr)
+    optimizer = optim.Adam(params=model_vgg16.parameters(), lr=lr)
 
     results = {
         "train_loss": [],
-        "test_loss": []
+        "test_loss": [],
+        "time": {
+            "seconds": 0.0,
+            "minutes": 0.0
+        }
     }
 
     start_time = timer()
     for epoch in tqdm(range(num_epochs)):
-        train_loss = train_step(model_tiny_vgg, train_dataloader, loss_fn, optimizer=optimizer, device=device)
-        test_loss = test_step(model_tiny_vgg, test_dataloader, loss_fn, device=device)
+        train_loss = train_step(model_vgg16, train_dataloader, loss_fn, optimizer=optimizer, device=device)
+        test_loss = test_step(model_vgg16, test_dataloader, loss_fn, device=device)
 
         print(f"Epoch: {epoch}")
         print(f"Train loss: {train_loss}")
@@ -146,8 +154,10 @@ def main():
     print("========================\nTrain time:")
     print(f"Seconds: {end_time - start_time:.3f}")
     print(f"Minutes: {(end_time - start_time) / 60:.2f}")
+    results["time"]["seconds"] = end_time - start_time
+    results["time"]["minutes"] = (end_time - start_time) / 60
 
-    save_state(model_tiny_vgg.state_dict(), config, "tinyVgg")
+    save_state(model_vgg16.state_dict(), config, results, "vgg16")
     plot_loss_curves(results)
 
 

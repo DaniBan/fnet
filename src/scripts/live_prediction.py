@@ -1,6 +1,6 @@
 import cv2
 import torch
-from src.models.tiny_vgg import TinyVGG
+from src.models.vgg import TinyVGG
 from src.dataset.custom_lfw import FaceDataset
 from torchvision import transforms
 
@@ -13,7 +13,7 @@ if not camera.isOpened():
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 model = TinyVGG(3, 10, 18)
-model.load_state_dict(torch.load("../../states/24_03_24__15_16_29/tinyVgg", map_location=torch.device("cpu")))
+model.load_state_dict(torch.load("../../states/24_04_02__19_45_04/tinyVgg", map_location=torch.device("cpu")))
 model = model.to(device)
 
 while True:
