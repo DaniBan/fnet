@@ -13,8 +13,12 @@ if not camera.isOpened():
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 model = TinyVGG(3, 10, 18)
-model.load_state_dict(torch.load("../../states/24_04_02__19_45_04/tinyVgg", map_location=torch.device("cpu")))
+model.load_state_dict(torch.load("../../states/24_04_02__19_45_04/tinyVgg.pth", map_location=torch.device("cpu")))
 model = model.to(device)
+
+transform = transforms.Compose([
+    transforms.ToTensor()
+])
 
 while True:
     ret, frame = camera.read()
@@ -24,9 +28,10 @@ while True:
 
     frame = cv2.flip(frame, 1)
     frame = cv2.resize(frame, (img_size, img_size))
-    model_input = frame
-    model_input = torch.Tensor(model_input)
-    model_input = model_input.permute(2, 0, 1)
+    model_input = transform(frame)
+    # model_input = torch.Tensor(model_input)
+    print(model_input.shape)
+    # model_input = model_input.permute(2, 0, 1)
 
     with torch.inference_mode():
         model_input_batch = model_input.unsqueeze(dim=0).to(device)

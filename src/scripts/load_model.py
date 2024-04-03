@@ -9,7 +9,7 @@ import cv2
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
 model = TinyVGG(3, 10, 18)
-model.load_state_dict(torch.load("../../states/24_04_02__19_45_04/tinyVgg", map_location=torch.device("cpu")))
+model.load_state_dict(torch.load("../../states/24_04_02__19_45_04/tinyVgg.pth", map_location=torch.device("cpu")))
 model = model.to(device)
 
 transform = transforms.Compose([
@@ -28,4 +28,4 @@ img_batch = img_tensor.unsqueeze(dim=0)
 
 with torch.inference_mode():
     y_pred = model(img_batch.to(device))
-    plot_prediciton(img_tensor, y_pred.squeeze(dim=0))
+    plot_prediciton(img_tensor, y_pred.cpu().squeeze(dim=0))
