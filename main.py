@@ -17,7 +17,9 @@ from src.models.vgg import VGG16
 from src.scripts.dataloader import build_dataloader
 from src.utils.visualization import plot_loss_curves
 from src.utils.visualization import print_image
+from src.utils.visualization import plot_results
 
+from src.models.losses import MSExp
 
 def train_step(model: nn.Module,
                dataloader: torch.utils.data.DataLoader,
@@ -79,7 +81,7 @@ def save_state(state_dict, config, results=None, tag=None):
 
     if tag is None:
         tag = "model"
-    model_save_path = snapshot_path / tag
+    model_save_path = snapshot_path / f"{tag}.pth"
 
     # save state dict
     torch.save(obj=state_dict,
@@ -111,6 +113,8 @@ def main():
     batch_size = config["batch_size"]
     num_workers = config["num_workers"]
     lr = config["lr"]
+    lr_step = config["lr_step"]
+    lr_gamma = config["lr_gamma"]
 
     # Create train and test dataloaders
     train_dataloader = build_dataloader(train_dataset,
@@ -122,12 +126,13 @@ def main():
                                        num_workers=num_workers)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    # model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
-    model_vgg16 = VGG16(input_shape=3, output_shape=18).to(device=device)
+    model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
+    # model_vgg16 = VGG16(input_shape=3, output_shape=18).to(device=device)
 
     # Set criterion and optimizer
-    loss_fn = nn.MSELoss()
-    optimizer = optim.Adam(params=model_vgg16.parameters(), lr=lr)
+    loss_fn = MSExp(1.05)
+    optimizer = optim.Adam(params=model_tiny_vgg.parameters(), lr=lr)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
 
     results = {
         "train_loss": [],
@@ -137,15 +142,19 @@ def main():
             "minutes": 0.0
         }
     }
+    lr = []
 
     start_time = timer()
     for epoch in tqdm(range(num_epochs)):
-        train_loss = train_step(model_vgg16, train_dataloader, loss_fn, optimizer=optimizer, device=device)
-        test_loss = test_step(model_vgg16, test_dataloader, loss_fn, device=device)
+        train_loss = train_step(model_tiny_vgg, train_dataloader, loss_fn, optimizer=optimizer, device=device)
+        test_loss = test_step(model_tiny_vgg, test_dataloader, loss_fn, device=device)
+        lr.append(scheduler.get_last_lr())
+        scheduler.step()
 
         print(f"Epoch: {epoch}")
         print(f"Train loss: {train_loss}")
         print(f"Test loss: {test_loss}")
+        print(f"Learning rate: {scheduler.get_last_lr()}")
 
         results["train_loss"].append(train_loss)
         results["test_loss"].append(test_loss)
@@ -157,8 +166,9 @@ def main():
     results["time"]["seconds"] = end_time - start_time
     results["time"]["minutes"] = (end_time - start_time) / 60
 
-    save_state(model_vgg16.state_dict(), config, results, "vgg16")
-    plot_loss_curves(results)
+    tag = "tinyVgg" if isinstance(model_tiny_vgg, TinyVGG) else "vgg16"
+    save_state(model_tiny_vgg.state_dict(), config, results, tag)
+    plot_results(results, lr)
 
 
 if __name__ == "__main__":

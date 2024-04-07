@@ -70,7 +70,7 @@ def display_random_items(dataset: torch.utils.data.dataset.Dataset, n=2, m=2, se
     plt.show()
 
 
-def plot_prediciton(img, preds):
+def plot_prediction(img, preds):
     img_adjust = img.permute(1, 2, 0)
 
     label_x = preds[::2]
@@ -98,3 +98,37 @@ def plot_loss_curves(results: Dict[str, List[float]]):
     plt.legend()
 
     plt.show()
+
+
+def plot_lr(lr: list):
+    epochs = range(len(lr))
+    plt.figure(figsize=(4, 8))
+    plt.plot(epochs, lr, label="learning rate")
+    plt.xlabel("Epochs")
+    plt.legend()
+
+    plt.show()
+
+
+def plot_results(results: Dict[str, List[float]], lr):
+    fig = plt.figure(figsize=(9, 9))
+    train_loss = results["train_loss"]
+    test_loss = results["test_loss"]
+
+    epochs = range(len(train_loss))
+
+    fig.add_subplot(2, 1, 1)
+    plt.plot(epochs, train_loss, label="train loss")
+    plt.plot(epochs, test_loss, label="test loss")
+    plt.title("Loss")
+    plt.xlabel("Epochs")
+    plt.legend()
+
+    fig.add_subplot(2, 1, 2)
+    # plt.figure(figsize=(8, 4))
+    plt.plot(epochs, lr, label="learning rate")
+    plt.xlabel("Epochs")
+    plt.legend()
+
+    plt.show()
+    pass
