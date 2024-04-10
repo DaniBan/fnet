@@ -53,3 +53,43 @@ class BottleneckBlock(nn.Module):
 
         out += identity
         return out
+
+
+class ResNetLayer(nn.Sequential):
+    def __init__(self, in_channels, channels, num_blocks, stride=1, padding=1, blocktype="bottleneck"):
+
+        if blocktype == "bottleneck":
+            block = BottleneckBlock
+        elif blocktype == "basic":
+            raise ValueError(f"Block type <{blocktype}> not implemented")
+        else:
+            raise ValueError("Unknown block type")
+
+        layers = [block(in_planes=in_channels, planes=channels, stride=stride, padding=padding)]
+        for _ in range(1, num_blocks):
+            layers.append(block(in_planes=in_channels, planes=channels, stride=1, padding=padding))
+
+        self.in_channels = in_channels
+        self.out_channels = channels * BottleneckBlock.expansion
+        super(ResNetLayer).__init__(*layers)
+
+
+class ResNet(nn.Module):
+
+    def __init__(self, num_blocks):
+        super().__init__()
+
+        # common layers
+        layer_1 = ResNetLayer(64, 64, num_blocks[0], stride=1, padding=1)
+        layer_2 = ResNetLayer(256, 128, num_blocks[0], stride=1, padding=1)
+        layer_3 = ResNetLayer(512, 256, num_blocks[0], stride=1, padding=1)
+        layer_5 = ResNetLayer(1024, 512, num_blocks[0], stride=1, padding=1)
+
+        # scale specific layers
+
+        print("Not implemented")
+
+
+def res_net_50():
+    num_blocks = [3, 4, 6, 3]
+    return ResNet(num_blocks=num_blocks)
