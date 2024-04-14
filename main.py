@@ -18,8 +18,10 @@ from src.scripts.dataloader import build_dataloader
 from src.utils.visualization import plot_loss_curves
 from src.utils.visualization import print_image
 from src.utils.visualization import plot_results
+from src.models.resnet import res_net_50
 
 from src.models.losses import MSExp
+
 
 def train_step(model: nn.Module,
                dataloader: torch.utils.data.DataLoader,
@@ -126,12 +128,14 @@ def main():
                                        num_workers=num_workers)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-    model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
+    # model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
     # model_vgg16 = VGG16(input_shape=3, output_shape=18).to(device=device)
+    model_rn50 = res_net_50()
 
     # Set criterion and optimizer
     loss_fn = MSExp(1.05)
-    optimizer = optim.Adam(params=model_tiny_vgg.parameters(), lr=lr)
+    # optimizer = optim.Adam(params=model_rn50.parameters(), lr=lr)
+    optimizer = optim.SGD(params=model_rn50.parameters(), lr=lr)
     scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
 
     results = {
@@ -146,8 +150,8 @@ def main():
 
     start_time = timer()
     for epoch in tqdm(range(num_epochs)):
-        train_loss = train_step(model_tiny_vgg, train_dataloader, loss_fn, optimizer=optimizer, device=device)
-        test_loss = test_step(model_tiny_vgg, test_dataloader, loss_fn, device=device)
+        train_loss = train_step(model_rn50, train_dataloader, loss_fn, optimizer=optimizer, device=device)
+        test_loss = test_step(model_rn50, test_dataloader, loss_fn, device=device)
         lr.append(scheduler.get_last_lr())
         scheduler.step()
 
@@ -166,8 +170,8 @@ def main():
     results["time"]["seconds"] = end_time - start_time
     results["time"]["minutes"] = (end_time - start_time) / 60
 
-    tag = "tinyVgg" if isinstance(model_tiny_vgg, TinyVGG) else "vgg16"
-    save_state(model_tiny_vgg.state_dict(), config, results, tag)
+    tag = "tinyVgg" if isinstance(model_rn50, TinyVGG) else "resnet50"
+    save_state(model_rn50.state_dict(), config, results, tag)
     plot_results(results, lr)
 
 
