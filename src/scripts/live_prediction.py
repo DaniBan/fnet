@@ -1,7 +1,6 @@
 import cv2
 import torch
 from src.models.vgg import TinyVGG
-from src.dataset.custom_lfw import FaceDataset
 from torchvision import transforms
 
 img_size = 250

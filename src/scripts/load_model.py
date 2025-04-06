@@ -1,7 +1,6 @@
 import torch
 from src.models.vgg import TinyVGG
-from src.models.vgg import VGG16
-from src.dataset.custom_lfw import FaceDataset
+from src.dataset.lfw.custom_lfw import FaceDataset
 from torchvision import transforms
 from src.utils.visualization import plot_prediction
 import cv2

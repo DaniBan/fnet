@@ -11,17 +11,14 @@ import torch.utils.data
 from torchvision import transforms
 from tqdm import tqdm
 
-from src.dataset.data_factory import build_datasets
+from src.dataset.lfw.data_factory import build_datasets
 from src.models.vgg import TinyVGG
-from src.models.vgg import VGG16
 from src.scripts.dataloader import build_dataloader
-from src.utils.visualization import plot_loss_curves
-from src.utils.visualization import print_image
 from src.utils.visualization import plot_results
 from src.models.resnet import res_net_50
 
 from src.models.losses import MSExp
-
+from yacs.config import CfgNode
 
 def train_step(model: nn.Module,
                dataloader: torch.utils.data.DataLoader,
@@ -98,7 +95,6 @@ def save_state(state_dict, config, results=None, tag=None):
         with open(os.path.join(snapshot_path, "results"), "w") as f:
             json.dump(results, f, indent=2)
 
-
 def main():
     # Fetch dataset
     data_transform = transforms.Compose([
@@ -109,23 +105,19 @@ def main():
                                                  transform_test=data_transform)
 
     # Load configurations
-    with open("config/configs.json") as f:
-        config = json.load(f)
-    num_epochs = config["num_epochs"]
-    batch_size = config["batch_size"]
-    num_workers = config["num_workers"]
-    lr = config["lr"]
-    lr_step = config["lr_step"]
-    lr_gamma = config["lr_gamma"]
+    with open("config/fddb.yml") as f:
+        config = CfgNode.load_cfg(f)
+
+
 
     # Create train and test dataloaders
     train_dataloader = build_dataloader(train_dataset,
-                                        batch_size=batch_size,
-                                        num_workers=num_workers,
+                                        batch_size=config.batch_size,
+                                        num_workers=config.num_workers,
                                         shuffle=True)
     test_dataloader = build_dataloader(test_dataset,
-                                       batch_size=batch_size,
-                                       num_workers=num_workers)
+                                       batch_size=config.batch_size,
+                                       num_workers=config.num_workers)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     # model_tiny_vgg = TinyVGG(input_shape=3, hidden_units=10, output_shape=18).to(device=device)
@@ -135,8 +127,8 @@ def main():
     # Set criterion and optimizer
     loss_fn = MSExp(1.05)
     # optimizer = optim.Adam(params=model_rn50.parameters(), lr=lr)
-    optimizer = optim.SGD(params=model_rn50.parameters(), lr=lr)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=lr_step, gamma=lr_gamma)
+    optimizer = optim.SGD(params=model_rn50.parameters(), lr=config.lr)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=config.lr_step, gamma=config.lr_gamma)
 
     results = {
         "train_loss": [],
@@ -149,7 +141,7 @@ def main():
     lr = []
 
     start_time = timer()
-    for epoch in tqdm(range(num_epochs)):
+    for epoch in tqdm(range(config.num_epochs)):
         train_loss = train_step(model_rn50, train_dataloader, loss_fn, optimizer=optimizer, device=device)
         test_loss = test_step(model_rn50, test_dataloader, loss_fn, device=device)
         lr.append(scheduler.get_last_lr())

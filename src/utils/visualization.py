@@ -51,7 +51,6 @@ def display_random_items(dataset: torch.utils.data.dataset.Dataset, n=2, m=2, se
     :param m: number of cols
     :param seed: random seed
     """
-
     torch.manual_seed(seed)
     indexes = torch.randint(0, len(dataset), size=[n * m]).tolist()
     fig = plt.figure(figsize=(9, 9))

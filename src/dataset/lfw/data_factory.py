@@ -1,6 +1,6 @@
 import os.path
 
-from src.dataset.custom_lfw import FaceDataset
+from src.dataset.lfw.custom_lfw import FaceDataset
 
 
 def build_datasets(target_dir,

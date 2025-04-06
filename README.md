@@ -1,1 +1,11 @@
-TODO: fill this
+TODO list:
+- add FDDB dataset and create:
+  - dataloaders
+  - ImageFolder if necessary
+- display random images with labels
+- run resnet on it
+- run vgg on it
+- investigate vision transformer 
+  - https://github.com/facebookresearch/detr
+  - https://arxiv.org/pdf/2005.12872
+- migrate to toml configs
