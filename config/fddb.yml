@@ -1,11 +1,17 @@
-num_epochs: 10
+num_epochs: 30
 
-batch_size: 1
+batch_size: 4
 
 lr: 0.001
 
-lr_step: 10
+lr_step: 0.001
 
 lr_gamma: 0.1
 
-num_workers: 1
+momentum: 0.9
+
+weight_decay: 0.0005
+
+num_workers: 2
+
+target_dir: "C:\\Users\\big_b\\.cache\\kagglehub\\datasets\\ngoduy\\dataset-for-face-detection\\versions\\1\\Dataset_FDDB\\Dataset_FDDB"

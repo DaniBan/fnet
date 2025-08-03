@@ -1,7 +1,3 @@
-import json
-import os
-from datetime import datetime
-from pathlib import Path
 from timeit import default_timer as timer
 
 import torch
@@ -10,15 +6,16 @@ import torch.optim as optim
 import torch.utils.data
 from torchvision import transforms
 from tqdm import tqdm
+from yacs.config import CfgNode
 
 from src.dataset.lfw.data_factory import build_datasets
+from src.models.losses import MSExp
+from src.models.resnet import res_net_50
 from src.models.vgg import TinyVGG
 from src.scripts.dataloader import build_dataloader
+from src.utils.train import save_state
 from src.utils.visualization import plot_results
-from src.models.resnet import res_net_50
 
-from src.models.losses import MSExp
-from yacs.config import CfgNode
 
 def train_step(model: nn.Module,
                dataloader: torch.utils.data.DataLoader,
@@ -68,33 +65,6 @@ def test_step(model: nn.Module,
     return total_loss
 
 
-def save_state(state_dict, config, results=None, tag=None):
-    state_path = Path("states")
-    state_path.mkdir(parents=True,
-                     exist_ok=True)
-
-    state_name = datetime.now().strftime("%y_%m_%d__%H_%M_%S")
-    snapshot_path = state_path / Path(state_name)
-    snapshot_path.mkdir(parents=True,
-                        exist_ok=True)
-
-    if tag is None:
-        tag = "model"
-    model_save_path = snapshot_path / f"{tag}.pth"
-
-    # save state dict
-    torch.save(obj=state_dict,
-               f=model_save_path)
-
-    # save config
-    with open(os.path.join(snapshot_path, "config.json"), "w") as f:
-        json.dump(config, f, indent=2)
-
-    # save results
-    if results is not None:
-        with open(os.path.join(snapshot_path, "results"), "w") as f:
-            json.dump(results, f, indent=2)
-
 def main():
     # Fetch dataset
     data_transform = transforms.Compose([
@@ -107,8 +77,6 @@ def main():
     # Load configurations
     with open("config/fddb.yml") as f:
         config = CfgNode.load_cfg(f)
-
-
 
     # Create train and test dataloaders
     train_dataloader = build_dataloader(train_dataset,
