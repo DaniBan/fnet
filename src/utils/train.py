@@ -5,6 +5,17 @@ from pathlib import Path
 
 import torch
 
+_DEFAULT_MODEL_FILENAME = "model.pth"
+_CONFIG_FILENAME = "config.json"
+_RESULTS_FILENAME = "results.json"
+
+
+def _save_json_file(data: dict, file_path: Path):
+    """Save a dictionary as a JSON file if the file does not already exist."""
+    if not file_path.exists():
+        with open(file_path, "w") as file:
+            json.dump(data, file, indent=2)
+
 
 def load_config() -> dict:
     """
@@ -27,22 +38,28 @@ def save_state(state_dict: dict,
                snapshot_tag: str | None = None,
                results: dict | None = None) -> None:
     """
-    Saves the model state, configuration, and optional results to disk in a structured directory format, creating
-    necessary directories if they do not exist. The function ensures that snapshots are organized under specific
-    tags for models, experiments, and snapshots, allowing for easy retrieval and management of saved states.
+    Saves the current state of the model, including configurations and results,
+    into a structured directory format. This method helps in managing model
+    snapshots effectively for experiments and checkpoints.
 
     Args:
-        state_dict (dict): A dictionary containing the model's state, typically obtained from PyTorch's `state_dict()`
-            method.
-        config (dict): A dictionary containing the model and training configuration settings.
-        model_tag (str): The tag or identifier for the model, used as part of the directory structure for saving files.
-        experiment_tag (str | None, optional): An optional tag to identify the specific experiment. If not provided,
-            the current timestamp is used to create a unique tag format (YY_MM_DD__HH_MM_SS).
-        snapshot_tag (str | None, optional): An optional tag to label the specific snapshot within the experiment. If not
-            provided, no snapshot subdirectory is created, and files are saved directly under the experiment directory.
-        results (dict | None, optional): An optional dictionary containing results or additional metadata to be saved.
-            If provided, it will be saved as a JSON file in the same directory.
+        state_dict (dict): The state dictionary of the model to be saved.
+            It typically contains model weights and buffers.
+        config (dict): The configuration dictionary containing essential
+            parameters and settings related to the model or experiment.
+        model_tag (str): A string identifier for the model. This is used to
+            organize snapshots under a specific model directory.
+        experiment_tag (str | None): A custom string identifier for the
+            experiment directory. If not provided, a timestamped tag is
+            automatically generated.
+        snapshot_tag (str | None): An optional tag to name the snapshot file
+            containing the model weights and configuration. Defaults to
+            "_DEFAULT_MODEL_FILENAME" if not provided.
+        results (dict | None): An optional dictionary containing results,
+            metrics, or additional outcomes to be saved alongside the model
+            and configuration. If not provided, no results are stored.
     """
+    # Define experiment-related paths
     state_path = Path("states")
     state_path.mkdir(parents=True,
                      exist_ok=True)
@@ -50,25 +67,22 @@ def save_state(state_dict: dict,
     if experiment_tag is None:
         experiment_tag = datetime.now().strftime("%y_%m_%d__%H_%M_%S")
 
-    if snapshot_tag is not None:
-        snapshot_path = state_path / model_tag / experiment_tag / snapshot_tag
-    else:
-        snapshot_path = state_path / model_tag / experiment_tag
-
+    snapshot_path = state_path / model_tag / experiment_tag
     snapshot_path.mkdir(parents=True,
                         exist_ok=True)
 
-    model_save_path = snapshot_path / "state.pth"
+    # Save the state dict
+    model_filename = f"{snapshot_tag}.pth" if snapshot_tag else _DEFAULT_MODEL_FILENAME
+    model_save_path = snapshot_path / model_filename
 
-    # save state dict
     torch.save(obj=state_dict,
                f=model_save_path)
 
-    # save config
-    with open(os.path.join(snapshot_path, "config.json"), "w") as f:
-        json.dump(config, f, indent=2)
+    # Save configs
+    config_path = snapshot_path / _CONFIG_FILENAME
+    _save_json_file(config, config_path)
 
-    # save results
+    # Save results if any
     if results is not None:
-        with open(os.path.join(snapshot_path, "results"), "w") as f:
-            json.dump(results, f, indent=2)
+        results_path = snapshot_path / _RESULTS_FILENAME
+        _save_json_file(results, results_path)

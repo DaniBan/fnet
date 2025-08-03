@@ -157,12 +157,10 @@ def main():
         lr_scheduler.step()
 
         # Save model snapshot
-        # if (epoch + 1) % 10 == 0 and epoch != config.num_epochs - 1:
-        #     save_state(model.state_dict(), config, model_tag=f"fasterrcnn_resnet50_fpn",
-        #                experiment_tag=current_datetime, instance_tag=f"epoch_{epoch}", results=results)
-
-        save_state(model.state_dict(), config, model_tag=f"fasterrcnn_resnet50_fpn",
-                   experiment_tag=current_datetime, snapshot_tag=f"epoch_{epoch}", results=results)
+        if (epoch + 1) % 10 == 0 and epoch != config.num_epochs - 1:
+            save_state(model.state_dict(), config, model_tag=f"fasterrcnn_resnet50_fpn",
+                       experiment_tag=current_datetime, snapshot_tag=f"epoch_{epoch}", results=results)
+            logger.info(f"mAp at epoch {epoch}:\n{results["test_mean_ap"]}")
 
     logger.info(f"Results:\n{json.dumps(results, indent=4)}")
     save_state(model.state_dict(), config, model_tag="fasterrcnn_resnet50_fpn", experiment_tag=current_datetime,
