@@ -1,4 +1,6 @@
+import json
 import logging
+from datetime import datetime
 from pathlib import Path
 
 import torch  # root package
@@ -143,6 +145,7 @@ def main():
         "train_loss": [],
         "test_mean_ap": []
     }
+    current_datetime = datetime.now().strftime("%y_%m_%dT%H_%M_%S")
     for epoch in tqdm(range(config.num_epochs)):
         train_loss = train_step(model, dataloader=train_dataloader, optimizer=optimizer, device=device)
         results["train_loss"].append(train_loss)
@@ -152,11 +155,18 @@ def main():
         results["test_mean_ap"].append(mean_ap)
 
         lr_scheduler.step()
-        if (epoch + 1) % 10 == 0:
-            save_state(model.state_dict(), config, results, tag=f"fasterrcnn_resnet50_fpn_{epoch}")
 
-    print(results)
-    save_state(model.state_dict(), config, results, tag="fasterrcnn_resnet50_fpn")
+        # Save model snapshot
+        # if (epoch + 1) % 10 == 0 and epoch != config.num_epochs - 1:
+        #     save_state(model.state_dict(), config, model_tag=f"fasterrcnn_resnet50_fpn",
+        #                experiment_tag=current_datetime, instance_tag=f"epoch_{epoch}", results=results)
+
+        save_state(model.state_dict(), config, model_tag=f"fasterrcnn_resnet50_fpn",
+                   experiment_tag=current_datetime, snapshot_tag=f"epoch_{epoch}", results=results)
+
+    logger.info(f"Results:\n{json.dumps(results, indent=4)}")
+    save_state(model.state_dict(), config, model_tag="fasterrcnn_resnet50_fpn", experiment_tag=current_datetime,
+               results=results)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import List, Dict
 
 import torch
 from PIL import Image
@@ -8,7 +7,7 @@ from torch.utils.data import Dataset
 
 class FDDBDataset(Dataset):
 
-    def __init__(self, data: Dict[Path, List[List[int]]], transform=None, target_shape=None):
+    def __init__(self, data: dict[Path, list[list[int]]], transform=None, target_shape=None):
         self.paths = list(data.keys())
         self.transform = transform
         self.target_shape = target_shape

@@ -130,8 +130,6 @@ def main():
     results["time"]["seconds"] = end_time - start_time
     results["time"]["minutes"] = (end_time - start_time) / 60
 
-    tag = "tinyVgg" if isinstance(model_rn50, TinyVGG) else "resnet50"
-    save_state(model_rn50.state_dict(), config, results, tag)
     plot_results(results, lr)
 
 
