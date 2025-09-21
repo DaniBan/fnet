@@ -40,7 +40,8 @@ def run_inference(model, image, target, device):
             "scores": sub_pred["scores"].cpu()
         } for sub_pred in y_pred]
         pred_elem = y_pred[0]
-        logger.info(f"Predicted bounding boxes: {pred_elem['boxes']}")
+        logger.info(f"Predicted bounding boxes: {pred_elem['boxes']}\n"
+                    f"Scores: {pred_elem['scores']}")
 
         # Plot prediction
         image = image.cpu()
@@ -72,6 +73,22 @@ def run_inference(model, image, target, device):
 
 
 def run_inference_n(model: torch.nn.Module, images: list, targets: list[dict], device: torch.device = "cpu"):
+    """
+    Runs inference on a set of images using a given model, visualizes the predictions
+    along with ground truth bounding boxes, and handles device placement. The function
+    processes a collection of images, moves data and models to the specified device,
+    performs inference, and generates a visualization grid for side-by-side comparisons
+    of predictions and truth.
+
+    Args:
+        model (torch.nn.Module): The model used for inference.
+        images (list): List of input images where each image is represented as a
+            PyTorch tensor.
+        targets (list[dict]): List of dictionaries containing ground truth data for
+            corresponding images. Each dictionary should include key "boxes" which
+            contains bounding box coordinates.
+        device (torch.device): Device to use for computation (e.g., "cpu", "cuda").
+    """
     # Move model and data to device
     model = model.to(device)
     for i in range(len(images)):
@@ -101,8 +118,8 @@ def run_inference_n(model: torch.nn.Module, images: list, targets: list[dict], d
         for c in range(cols):
             i = r * cols + c
             if i < n:
-                # TODO: solve bug when the number of elements go on 1 line
-                ax[r, c].imshow(images[i].permute(1, 2, 0))
+                pos = c if rows == 1 else (r, c)
+                ax[pos].imshow(images[i].permute(1, 2, 0))
 
                 if len(predictions[i]) == 0:
                     continue
@@ -110,19 +127,18 @@ def run_inference_n(model: torch.nn.Module, images: list, targets: list[dict], d
                 # Predicted bounding boxes
                 nb_bboxes_to_plot = min(len(targets[i]["boxes"]), len(predictions[i]["boxes"]))
                 for x1, y1, x2, y2 in predictions[i]["boxes"][:nb_bboxes_to_plot]:
-                    x1_orig, y1_orig, x2_orig, y2_orig = targets[i]["boxes"][0]
                     rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor="blue",
                                              fill=False, label="Prediction")
-                    ax[r, c].add_patch(rect)
+                    ax[pos].add_patch(rect)
 
                 # Ground truth bounding boxes
                 for x1, y1, x2, y2 in targets[i]["boxes"]:
                     rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor="green",
                                               fill=False, label="Ground Truth")
-                    ax[r, c].add_patch(rect)
+                    ax[pos].add_patch(rect)
 
-                ax[r, c].set_xticks([])
-                ax[r, c].set_yticks([])
+                ax[pos].set_xticks([])
+                ax[pos].set_yticks([])
     plt.show()
 
 
