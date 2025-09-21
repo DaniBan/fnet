@@ -74,8 +74,6 @@ def plot_prediction(img, preds):
 
     label_x = preds[::2]
     label_y = preds[1::2]
-    print(label_x)
-    print(label_y)
     plt.figure(figsize=(9, 9))
     plt.imshow(img_adjust)
     plt.scatter(label_x, label_y, s=8, c="r")
@@ -124,7 +122,6 @@ def plot_results(results: Dict[str, List[float]], lr):
     plt.legend()
 
     fig.add_subplot(2, 1, 2)
-    # plt.figure(figsize=(8, 4))
     plt.plot(epochs, lr, label="learning rate")
     plt.xlabel("Epochs")
     plt.legend()

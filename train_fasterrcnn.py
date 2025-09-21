@@ -1,5 +1,6 @@
 import json
 import logging
+from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
@@ -10,18 +11,21 @@ from torch.amp import autocast, GradScaler
 from torch.utils.data import DataLoader  # dataset representation and loading
 from torchmetrics.detection.mean_ap import MeanAveragePrecision
 from torchmetrics.metric import Metric
-from torchvision import transforms
 from torchvision.models.detection.faster_rcnn import fasterrcnn_resnet50_fpn, FasterRCNN_ResNet50_FPN_Weights
 from tqdm import tqdm
 from yacs.config import CfgNode
 
 from src.dataset.fddb.fddb import FDDBDataset
 from src.dataset.fddb.utils import split_train_test
+from src.utils.fasterrcnn import plot_results
 from src.utils.train import save_state
 
-logger = logging.getLogger("train_FDDB")
-logger.setLevel(logging.INFO)
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,  # Set the minimum logging level
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",  # Format for log messages
+)
+logger = logging.getLogger(__name__)
 
 scaler = GradScaler(device="cuda")  # Initialize the gradient scaler
 
@@ -103,13 +107,9 @@ def main():
     train_data, test_data = split_train_test(Path(config.target_dir))
     logger.info(f"# train: {len(train_data)} | # test: {len(test_data)}")
 
-    new_size = (600, 600)  # (H, W)
-    data_transform = transforms.Compose([
-        transforms.Resize(new_size),
-        transforms.ToTensor()
-    ])
-    train_dataset = FDDBDataset(train_data, transform=data_transform, target_shape=new_size)
-    test_dataset = FDDBDataset(test_data, transform=data_transform, target_shape=new_size)
+    new_size = (450, 450)  # (H, W)
+    train_dataset = FDDBDataset(train_data, to_tensor=True, target_size=new_size)
+    test_dataset = FDDBDataset(test_data, to_tensor=True, target_size=new_size)
 
     train_dataloader = DataLoader(dataset=train_dataset,
                                   batch_size=config.batch_size,
@@ -125,7 +125,6 @@ def main():
 
     # Load model
     model = fasterrcnn_resnet50_fpn(weights=FasterRCNN_ResNet50_FPN_Weights.DEFAULT)
-    # model.roi_heads.score_thresh = 0.001
     model = model.to(device)
 
     # Freeze feature extractor layers
@@ -135,24 +134,26 @@ def main():
     # Set up the optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=config.lr, momentum=config.momentum, weight_decay=config.weight_decay)
+
     # Learning rate scheduler
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=config.lr_step, gamma=config.lr_gamma)
+    lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=10)
 
     # Set up test metric
     metric = MeanAveragePrecision(iou_type="bbox")
 
     results = {
-        "train_loss": [],
-        "test_mean_ap": []
+        "train_loss": defaultdict(list),
+        "test_mean_ap": defaultdict(list)
     }
     current_datetime = datetime.now().strftime("%y_%m_%dT%H_%M_%S")
     for epoch in tqdm(range(config.num_epochs)):
         train_loss = train_step(model, dataloader=train_dataloader, optimizer=optimizer, device=device)
-        results["train_loss"].append(train_loss)
+        for key, value in train_loss.items():
+            results["train_loss"][key].append(value)
 
         mean_ap = test_step(model, dataloader=test_dataloader, metric=metric, device=device)
-        mean_ap = {k: v.tolist() for k, v in mean_ap.items()}
-        results["test_mean_ap"].append(mean_ap)
+        for key, value in mean_ap.items():
+            results["test_mean_ap"][key].append(value.tolist())
 
         lr_scheduler.step()
 
@@ -163,6 +164,7 @@ def main():
             logger.info(f"mAp at epoch {epoch}:\n{results["test_mean_ap"]}")
 
     logger.info(f"Results:\n{json.dumps(results, indent=4)}")
+    plot_results(results)
     save_state(model.state_dict(), config, model_tag="fasterrcnn_resnet50_fpn", experiment_tag=current_datetime,
                results=results)
 

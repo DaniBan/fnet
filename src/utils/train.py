@@ -11,10 +11,9 @@ _RESULTS_FILENAME = "results.json"
 
 
 def _save_json_file(data: dict, file_path: Path):
-    """Save a dictionary as a JSON file if the file does not already exist."""
-    if not file_path.exists():
-        with open(file_path, "w") as file:
-            json.dump(data, file, indent=2)
+    """Save a dictionary as a JSON file."""
+    with open(file_path, "w") as file:
+        json.dump(data, file, indent=2)  # noqa
 
 
 def load_config() -> dict:
