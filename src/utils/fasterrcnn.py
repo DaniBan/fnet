@@ -113,13 +113,13 @@ def run_inference_n(model: torch.nn.Module, images: list, targets: list[dict], d
         rows -= 1
     cols = n // rows
 
-    _, ax = plt.subplots(nrows=rows, ncols=cols, figsize=(9, 9))
+    _, axs = plt.subplots(nrows=rows, ncols=cols, figsize=(9, 9))
     for r in range(rows):
         for c in range(cols):
             i = r * cols + c
             if i < n:
                 pos = c if rows == 1 else (r, c)
-                ax[pos].imshow(images[i].permute(1, 2, 0))
+                axs[pos].imshow(images[i].permute(1, 2, 0))
 
                 if len(predictions[i]) == 0:
                     continue
@@ -129,16 +129,16 @@ def run_inference_n(model: torch.nn.Module, images: list, targets: list[dict], d
                 for x1, y1, x2, y2 in predictions[i]["boxes"][:nb_bboxes_to_plot]:
                     rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor="blue",
                                              fill=False, label="Prediction")
-                    ax[pos].add_patch(rect)
+                    axs[pos].add_patch(rect)
 
                 # Ground truth bounding boxes
                 for x1, y1, x2, y2 in targets[i]["boxes"]:
                     rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=2, edgecolor="green",
                                               fill=False, label="Ground Truth")
-                    ax[pos].add_patch(rect)
+                    axs[pos].add_patch(rect)
 
-                ax[pos].set_xticks([])
-                ax[pos].set_yticks([])
+                axs[pos].set_xticks([])
+                axs[pos].set_yticks([])
     plt.show()
 
 

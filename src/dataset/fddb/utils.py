@@ -84,7 +84,7 @@ def split_train_test(src: Path, train_ratio: float = 0.8, shuffle: bool = False,
     if not 0.0 <= train_ratio <= 1.0:
         raise ValueError("Split ratio must be between 0.0 and 1.0.")
 
-    image_paths, image_annotations = _load_annotations(src)
+    image_paths, image_annotations = load_annotations(src)
 
     if shuffle:
         random_ = random.Random(seed)
@@ -101,7 +101,7 @@ def split_train_test(src: Path, train_ratio: float = 0.8, shuffle: bool = False,
     return train_data, test_data
 
 
-def _load_annotations(src: Path) -> Tuple[List[Path], Dict[Path, List[List[int]]]]:
+def load_annotations(src: Path) -> Tuple[List[Path], Dict[Path, List[List[int]]]]:
     """Loads annotations from the `label.txt` file."""
     image_paths = []
     image_annotations = {}
